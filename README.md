@@ -1,45 +1,54 @@
-# Prisma Client Extension starter repository
+# prisma-extension-cache
 
-Use this template to bootstrap creating your Prisma Client extension.
+A caching extension for [Prisma](https://www.prisma.io/), compatible with [cache-manager](https://www.npmjs.com/package/cache-manager).
 
-Client extensions provide a powerful way to add functionality to Prisma Client in a type-safe manner. You can use them to create simple and flexible solutions that are not natively supported by Prisma. 
+## Features
 
+- [cache-manager](https://www.npmjs.com/package/cache-manager) compatibility
+- Only model queries can be cacheable (no $query or $queryRaw)
+- Uses [object-code](https://www.npmjs.com/package/object-code) as default key generator, but you can pass a custom one
+- In-memory cache is recommended, since types like Date or Prisma.Decimal would be lost if using JSON serialization (maybe will try to use some binary serialization in the future)
 
+## Installation
 
-If you would like to learn more, refer to the [Prisma docs](https://www.prisma.io/docs/concepts/components/prisma-client/client-extensions) to learn more information.
-
-## Get started
-
-Click the **Use this template** button and provide details for your Client extension
-
-Install the dependencies:
-
-```
-npm install
-```
-
-Build the extension:
+Install:
 
 ```
-npm run build
+npm i prisma-extension-cache
 ```
 
-Set up the example app:
+## Usage
 
-```
-cd example
-npm install
-npx prisma db push
-```
+```typescript
+import { PrismaClient } from '@prisma/client';
+import * as cm from 'cache-manager';
+import cacheExtension from 'prisma-extension-cache';
 
-Test the extension in the example app:
-```
-npm run dev
-```
+async function main() {
+  const cache = await cm.caching('memory', {
+    ttl: 10000,
+    max: 200,
+  });
+  const prisma = new PrismaClient().$extends(cacheExtension({ cache }));
+  await prisma.user.findUniqueOrThrow({
+    where: {
+      email: user.email,
+    },
+    cache: true, // using cache default settings
+  });
+  await prisma.user.findMany({
+    cache: 5000, // setting ttl in milliseconds
+  });
+  await prisma.user.count({
+    cache: {
+      ttl: 2000,
+      key: 'user_count', // custom cache key
+    },
+  });
+}
 
-### Evolve the extension
-
-The code for the extension is located in the [`index.ts`](./src/index.ts) file. Feel free to update it before publishing your Client extension to [npm](https://npmjs.com/).
+main().catch(console.error);
+```
 
 ## Learn more
 
