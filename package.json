@@ -22,7 +22,8 @@
   ],
   "scripts": {
     "prepare": "run-s build",
-    "build": "tsc"
+    "build": "tsc",
+    "prepublishOnly": "cd example && npm i && npm test"
   },
   "peerDependencies": {
     "@prisma/client": "^5.3.1"
