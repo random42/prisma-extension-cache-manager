@@ -1,4 +1,4 @@
-# prisma-extension-cache
+# prisma-extension-cache-manager
 
 A caching extension for [Prisma](https://www.prisma.io/), compatible with [cache-manager](https://www.npmjs.com/package/cache-manager).
 
@@ -14,7 +14,7 @@ A caching extension for [Prisma](https://www.prisma.io/), compatible with [cache
 Install:
 
 ```
-npm i prisma-extension-cache
+npm i prisma-extension-cache-manager
 ```
 
 ## Usage
@@ -22,7 +22,7 @@ npm i prisma-extension-cache
 ```typescript
 import { PrismaClient } from '@prisma/client';
 import * as cm from 'cache-manager';
-import cacheExtension from 'prisma-extension-cache';
+import cacheExtension from 'prisma-extension-cache-manager';
 
 async function main() {
   const cache = await cm.caching('memory', {

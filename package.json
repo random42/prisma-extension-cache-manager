@@ -6,7 +6,7 @@
   "description": "Prisma client extension for caching model queries",
   "repository": {
     "type": "git",
-    "url": "https://github.com/random42/prisma-extension-cache.git"
+    "url": "https://github.com/random42/prisma-extension-cache-manager.git"
   },
   "keywords": [
     "prisma",
