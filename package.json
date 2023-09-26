@@ -1,6 +1,6 @@
 {
   "name": "prisma-extension-cache-manager",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "license": "MIT",
   "author": "Roberto Sero",
   "description": "Prisma client extension for caching model queries",
@@ -23,6 +23,7 @@
   "scripts": {
     "prepare": "run-s build",
     "build": "tsc",
+    "prebuild": "rimraf dist",
     "prepublishOnly": "cd example && npm i && npm test"
   },
   "peerDependencies": {
@@ -33,6 +34,7 @@
     "@types/lodash": "^4.14.199",
     "npm-run-all": "^4.1.5",
     "prisma": "^5.3.1",
+    "rimraf": "^5.0.4",
     "typescript": "^5.2.2"
   },
   "dependencies": {
