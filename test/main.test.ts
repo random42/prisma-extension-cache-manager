@@ -1,13 +1,11 @@
-import test, { before } from 'node:test';
-import assert from 'node:assert';
-import util from 'node:util';
-import { hash } from 'object-code';
 import { Prisma, PrismaClient } from '@prisma/client';
-import * as cm from 'cache-manager';
-import ext from '../../src';
 import { Metrics } from '@prisma/client/runtime/library';
-import _ from 'lodash';
-import { CACHE_OPERATIONS, PrismaCacheArgs } from '../../src/types';
+import * as cm from 'cache-manager';
+import assert from 'node:assert';
+import test from 'node:test';
+import { hash } from 'object-code';
+import ext from '../src';
+import { CACHE_OPERATIONS } from '../src/types';
 
 const sleep = (ms: number) => new Promise((res) => setTimeout(res, ms));
 
@@ -113,7 +111,7 @@ test('extension', { only: true }, async (t) => {
     await testCache();
   });
 
-  await t.test('value deep cloning', async (t) => {
+  await t.test('value matching', async (t) => {
     const key = 'key';
     const arg = {
       ...args,
@@ -131,13 +129,6 @@ test('extension', { only: true }, async (t) => {
     assert(d3);
     assert.deepEqual(d1, d2);
     assert.deepEqual(d1, d3);
-    assert(d1 !== d2 && d1 !== d3 && d2 !== d3);
-    assert(d1[0] !== d2[0] && d1[0] !== d3[0] && d2[0] !== d3[0]);
-    assert(
-      d1[0].timestamp !== d2[0].timestamp &&
-        d1[0].timestamp !== d3[0].timestamp &&
-        d2[0].timestamp !== d3[0].timestamp
-    );
   });
 
   await t.test('key generation', async (t) => {
@@ -219,13 +210,11 @@ test('extension', { only: true }, async (t) => {
     q++;
     c++;
     await sleep(defaultTtl + 10);
-    await c--;
     // cache miss
     await prisma.user.findFirst({
       cache: true,
     });
     q++;
-    c++;
     await testCache();
   });
 

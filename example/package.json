@@ -1,9 +1,7 @@
 {
   "name": "example",
   "scripts": {
-    "dev": "ts-node index.ts",
-    "test": "node --test --test-only --require ts-node/register ./test/*.test.ts",
-    "pretest": "prisma db push"
+    "dev": "ts-node index.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.3.1",

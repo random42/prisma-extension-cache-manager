@@ -1,6 +1,5 @@
 import { Prisma } from '@prisma/client/extension';
 import { hash } from 'object-code';
-import cloneDeep from 'lodash/cloneDeep';
 import {
   CACHE_OPERATIONS,
   CacheConfig,
@@ -11,15 +10,15 @@ import {
 } from './types';
 
 export type {
-  CacheOperation,
+  Cache,
   CacheConfig,
+  CacheOperation,
   CacheOptions,
   KeyGenerator,
   KeyGeneratorArgs,
-  PrismaCacheExtensionConfig,
-  PrismaCacheArgs,
-  Cache,
   Milliseconds,
+  PrismaCacheArgs,
+  PrismaCacheExtensionConfig,
 } from './types';
 
 export const defaultKeyGenerator: KeyGenerator = (args) =>
@@ -65,12 +64,7 @@ export default (config: PrismaCacheExtensionConfig) => {
           const key: string =
             options.key ??
             (await keyGenerator({ model, operation, args: queryArgs }));
-          const value = await cache.get(key);
-          if (value === undefined) {
-            const result = await query(queryArgs);
-            await cache.set(key, result, options.ttl);
-            return result;
-          } else return cloneDeep(value);
+          return cache.wrap(key, () => query(queryArgs), options.ttl);
         },
       },
     },
