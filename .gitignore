@@ -9,3 +9,4 @@ var/
 
 *.tgz
 dev.db
+.DS_Store
