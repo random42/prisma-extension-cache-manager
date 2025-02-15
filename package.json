@@ -1,6 +1,6 @@
 {
   "name": "prisma-extension-cache-manager",
-  "version": "0.4.0",
+  "version": "1.0.0",
   "license": "MIT",
   "author": "Roberto Sero",
   "description": "Prisma client extension for caching model queries",
