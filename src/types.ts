@@ -1,9 +1,6 @@
 import { Operation } from '@prisma/client/runtime/library';
 import { Prisma } from '@prisma/client/extension';
-import type * as cm from 'cache-manager';
-
-export type Cache = cm.Cache;
-export type Milliseconds = cm.Milliseconds;
+import type { Cache } from 'cache-manager';
 
 export const REQUIRED_ARGS_OPERATIONS = [
   'findUnique',
@@ -48,14 +45,14 @@ export interface CacheOptions {
   /**
    * Time-to-live in milliseconds
    */
-  ttl?: Milliseconds;
+  ttl?: number;
   /**
    * Cache key
    */
   key?: string;
 }
 
-export type CacheConfig = true | Milliseconds | CacheOptions;
+export type CacheConfig = true | number | CacheOptions;
 
 export interface PrismaCacheArgs {
   cache?: CacheConfig;

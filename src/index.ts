@@ -10,13 +10,11 @@ import {
 } from './types';
 
 export type {
-  Cache,
   CacheConfig,
   CacheOperation,
   CacheOptions,
   KeyGenerator,
   KeyGeneratorArgs,
-  Milliseconds,
   PrismaCacheArgs,
   PrismaCacheExtensionConfig,
 } from './types';

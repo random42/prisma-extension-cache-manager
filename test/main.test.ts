@@ -1,8 +1,11 @@
 import { Prisma, PrismaClient } from '@prisma/client';
 import { Metrics } from '@prisma/client/runtime/library';
 import * as cm from 'cache-manager';
+import { KeyvCacheableMemory } from 'cacheable';
+import Keyv from 'keyv';
 import assert from 'node:assert';
 import test from 'node:test';
+import v8 from 'node:v8';
 import { hash } from 'object-code';
 import ext from '../src';
 import { CACHE_OPERATIONS } from '../src/types';
@@ -11,8 +14,15 @@ const sleep = (ms: number) => new Promise((res) => setTimeout(res, ms));
 
 test('extension', { only: true }, async (t) => {
   const defaultTtl = 100;
-  const cache = await cm.caching('memory', {
+  const cache = cm.createCache({
     ttl: defaultTtl,
+    stores: [
+      new Keyv({
+        store: new KeyvCacheableMemory({ ttl: defaultTtl }),
+        serialize: (x) => v8.serialize(x).toString('base64'),
+        deserialize: (s) => v8.deserialize(Buffer.from(s, 'base64')),
+      }),
+    ],
   });
 
   // regenerate client to reset metrics
@@ -27,29 +37,31 @@ test('extension', { only: true }, async (t) => {
     )?.value;
   // expected db query count
   let q = 0;
-  // expected cache size
-  let c = 0;
 
   // reset client and cache before each test
   t.beforeEach(async () => {
     prisma = getClient();
-    await cache.reset();
+    await cache.clear();
     q = 0;
-    c = 0;
   });
 
-  const testCache = async () => {
+  const assertDbQueries = async () => {
     const qq = await queries();
-    const cc = cache.store.size;
-    assert.equal(qq, q, 'queries mismatch');
-    assert.equal(cc, c, 'cache mismatch');
+    assert.strictEqual(qq, q, 'queries mismatch');
   };
+
+  const assertCacheKeys = async (...keys: string[]) => {
+    const data = await cache.mget(keys);
+    assert.strictEqual(data.length, keys.length);
+    assert.ok(data.every((x) => x));
+  };
+
   const insert = {
     string: 'string',
-    decimal: new Prisma.Decimal('10.44'),
-    bigint: BigInt('1283231897'),
+    // decimal: new Prisma.Decimal('10.44'),
     float: 321.84784,
     timestamp: new Date(),
+    bigint: BigInt(4784788738318273),
     bytes: Buffer.from('o21ijferve9ir3'),
   };
   // clear table
@@ -71,9 +83,9 @@ test('extension', { only: true }, async (t) => {
           string: {
             not: null,
           },
-          decimal: {
-            not: new Prisma.Decimal('10.99'),
-          },
+          // decimal: {
+          //   not: new Prisma.Decimal('10.99'),
+          // },
         },
       ],
     },
@@ -107,8 +119,7 @@ test('extension', { only: true }, async (t) => {
     await prisma.user.count(useCache);
     const expectedOperations = CACHE_OPERATIONS.length;
     q += expectedOperations;
-    c += expectedOperations;
-    await testCache();
+    await assertDbQueries();
   });
 
   await t.test('value matching', async (t) => {
@@ -121,14 +132,12 @@ test('extension', { only: true }, async (t) => {
     };
     const d1 = await prisma.user.findMany(arg);
     q++;
-    c++;
-    await testCache();
-    const d2 = await prisma.user.findMany(arg);
+    const d2 = await prisma.user.findMany(arg); // cached
     const d3: typeof d2 = (await cache.get(key))!;
-    await testCache();
+    await assertDbQueries();
     assert(d3);
-    assert.deepEqual(d1, d2);
-    assert.deepEqual(d1, d3);
+    assert.deepStrictEqual(d1, d2);
+    assert.deepStrictEqual(d1, d3);
   });
 
   await t.test('key generation', async (t) => {
@@ -137,37 +146,38 @@ test('extension', { only: true }, async (t) => {
     const key = hash(hashingData).toString();
     assert(await cache.get(key));
     q++;
-    c++;
-    await testCache();
+    await assertDbQueries();
     // same arguments but different instantiation
-    const now = Date.now();
+    const now = new Date();
     await prisma.user.count({
       where: {
-        decimal: new Prisma.Decimal('1.1213'),
+        // decimal: new Prisma.Decimal('1.1213'),
         bytes: Buffer.from('123'),
-        timestamp: new Date(now),
+        timestamp: now,
       },
       cache: true,
     });
+    // hit because object hash is the same
+    // this may be different using a Decimal field
     await prisma.user.count({
       where: {
-        decimal: new Prisma.Decimal('1.1213'),
+        // decimal: new Prisma.Decimal('1.1213'),
         bytes: Buffer.from('123'),
-        timestamp: new Date(now),
+        timestamp: now,
       },
       cache: true,
     });
-    c++;
-    q++;
-    await testCache();
+    q += 1;
+    await assertDbQueries();
   });
 
   await t.test('no cache', async (t) => {
-    await prisma.user.findMany({ cache: true });
+    const key = 'key';
+    await prisma.user.findMany({ cache: { key } });
     await prisma.user.findMany();
     q += 2;
-    c++;
-    await testCache();
+    assertCacheKeys(key);
+    await assertDbQueries();
   });
 
   await t.test(
@@ -176,31 +186,31 @@ test('extension', { only: true }, async (t) => {
       await prisma.user.findMany({ ...args, cache: true });
       await prisma.user.count({ ...args, cache: true });
       q += 2;
-      c += 2;
-      await testCache();
+      await assertDbQueries();
     }
   );
 
   await t.test('same args different cache options', async (t) => {
+    // miss
     await prisma.user.count({ ...args, cache: true });
-    // cache hit
+    // hit
     await prisma.user.count({
       ...args,
       cache: {
         ttl: 200,
       },
     });
-    // cache miss
+    // miss (different key)
     await prisma.user.count({
       ...args,
       cache: {
         ttl: 100,
-        key: 'different-key',
+        key: 'key',
       },
     });
     q += 2;
-    c += 2;
-    await testCache();
+    await assertCacheKeys('key');
+    await assertDbQueries();
   });
 
   await t.test('default ttl', async (t) => {
@@ -208,14 +218,13 @@ test('extension', { only: true }, async (t) => {
       cache: true,
     });
     q++;
-    c++;
     await sleep(defaultTtl + 10);
     // cache miss
     await prisma.user.findFirst({
       cache: true,
     });
     q++;
-    await testCache();
+    await assertDbQueries();
   });
 
   await t.test('custom ttl', async (t) => {
@@ -224,13 +233,12 @@ test('extension', { only: true }, async (t) => {
       cache: ttl,
     });
     q++;
-    c++;
     await sleep(ttl + 10);
     await prisma.user.count({
       cache: ttl,
     });
     q++;
-    await testCache();
+    await assertDbQueries();
   });
 
   await t.test('shortened ttl should still use cache', async (t) => {
@@ -239,11 +247,10 @@ test('extension', { only: true }, async (t) => {
       cache: ttl,
     });
     q++;
-    c++;
     await sleep(ttl / 2);
     await prisma.user.count({
       cache: ttl / 4,
     });
-    await testCache();
+    await assertDbQueries();
   });
 });

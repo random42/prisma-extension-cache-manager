@@ -14,7 +14,7 @@ datasource db {
 model User {
   id        Int       @id @default(autoincrement())
   string    String?
-  decimal   Decimal?
+  // decimal   Decimal? this is not supported by v8 serialization
   bigint    BigInt?
   float     Float?
   timestamp DateTime?
@@ -24,5 +24,4 @@ model User {
 // model Post {
 //   id   Int     @id @default(autoincrement())
 //   text String?
-
 // }

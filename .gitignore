@@ -8,5 +8,5 @@ var/
 .env
 
 *.tgz
-dev.db
+dev.db*
 .DS_Store
