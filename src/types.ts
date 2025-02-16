@@ -6,6 +6,7 @@ export const REQUIRED_ARGS_OPERATIONS = [
   'findUnique',
   'findUniqueOrThrow',
   'groupBy',
+  'aggregate',
 ] as const satisfies ReadonlyArray<Operation>;
 export const OPTIONAL_ARGS_OPERATIONS = [
   'findMany',
