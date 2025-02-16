@@ -27,7 +27,7 @@ test('extension', { only: true }, async (t) => {
 
   // regenerate client to reset metrics
   const getClient = () => new PrismaClient().$extends(ext({ cache }));
-
+  const _client = new PrismaClient();
   let prisma = getClient();
   assert(prisma.$cache === cache);
   // db queries count
@@ -99,6 +99,8 @@ test('extension', { only: true }, async (t) => {
   await t.test('every model operation', async (t) => {
     const useCache = { cache: true } as const;
     await prisma.user.findFirst(useCache);
+    await prisma.user.findFirst(useCache);
+    await prisma.user.findFirstOrThrow(useCache);
     await prisma.user.findFirstOrThrow(useCache);
     const findUniqueArgs = {
       where: {
@@ -107,16 +109,30 @@ test('extension', { only: true }, async (t) => {
       ...useCache,
     } satisfies Prisma.UserFindUniqueArgs;
     await prisma.user.findUnique(findUniqueArgs);
+    await prisma.user.findUnique(findUniqueArgs);
     await prisma.user.findUniqueOrThrow(findUniqueArgs);
-    await prisma.user.groupBy({
+    await prisma.user.findUniqueOrThrow(findUniqueArgs);
+    const groupByArgs = {
       by: 'id',
       _sum: {
         float: true,
       },
       ...useCache,
-    });
+    } as const;
+    await prisma.user.groupBy(groupByArgs);
+    await prisma.user.groupBy(groupByArgs);
+    await prisma.user.findMany(useCache);
     await prisma.user.findMany(useCache);
     await prisma.user.count(useCache);
+    await prisma.user.count(useCache);
+    const agg = {
+      select: {
+        _count: true,
+      },
+      ...useCache,
+    } as const;
+    await prisma.user.aggregate(agg);
+    await prisma.user.aggregate(agg);
     const expectedOperations = CACHE_OPERATIONS.length;
     q += expectedOperations;
     await assertDbQueries();
