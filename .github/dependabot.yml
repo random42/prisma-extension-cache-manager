@@ -11,6 +11,10 @@ updates:
     labels:
       - "dependencies"
       - "automated"
+    groups:
+      all-dependencies:
+        patterns:
+          - "*" # This groups all dependencies into one PR
     # reviewers:
     #   - "your-github-username"
     # assignees:
