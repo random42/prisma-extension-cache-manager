@@ -4,7 +4,7 @@ A caching extension for [Prisma](https://www.prisma.io/), compatible with [cache
 
 ## Features
 
-- [cache-manager](https://www.npmjs.com/package/cache-manager) v6 compatibility
+- [cache-manager](https://www.npmjs.com/package/cache-manager) compatibility
 - Only model queries can be cacheable (no $query or $queryRaw)
 - Uses [object-code](https://www.npmjs.com/package/object-code) as default key generator, but you can pass a custom one
 
@@ -61,10 +61,3 @@ async function main() {
 
 main().catch(console.error);
 ```
-
-## Learn more
-
-- [Docs — Client extensions](https://www.prisma.io/docs/concepts/components/prisma-client/client-extensions)
-- [Docs — Shared extensions](https://www.prisma.io/docs/concepts/components/prisma-client/client-extensions/shared-extensions)
-- [Examples](https://github.com/prisma/prisma-client-extensions/tree/main)
-- [Preview announcement blog post](https://www.prisma.io/blog/client-extensions-preview-8t3w27xkrxxn#introduction)
